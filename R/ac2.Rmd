@@ -1,0 +1,94 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r}
+library(data.table)
+library(microbenchmark)
+library(ggplot2)
+```
+
+
+```{r}
+log_factorial <- function (n) {
+      # Return the log of factorial(n) for any integer n > 0
+      if (n <= 1)
+          return (0)
+      return (log(n) + log_factorial(n - 1))
+}
+
+sum_log_factorial <- function (n) {
+    # Return the sum of log_factorial(i) for i in 1..n
+    sum <- 0
+    for(i in seq(1, n, 1)) {
+        sum <- sum + log_factorial(i)
+    }
+    return (sum)
+}
+
+fibonacci <- function(n) {
+    # Return nth Fibonacci number
+    if (n <= 1)
+        return (n)
+    return (fibonacci(n - 1) + fibonacci(n - 2))
+}
+```
+
+
+```{r}
+benchmarck_1 <- function(ns, times=30) {
+  results <- lapply( ns, function(n) {
+    result <- microbenchmark( log_factorial(n), sum_log_factorial(n), times = times)
+    data <- setDT( summary(result) )
+    data[, n := n]
+    data
+  })
+  rbindlist(results)
+}
+```
+
+
+```{r}
+
+benchmarck_2 <- function(ns, times=30) {
+  results <- lapply( ns, function(n) {
+    result <- microbenchmark( fibonacci(n), times = times)
+    data <- setDT( summary(result) )
+    data[, n := n]
+    data
+  })
+  rbindlist(results)
+}
+```
+
+
+```{r}
+benchmarcks_1 <- benchmarck_1( seq(1,200,5) )
+benchmarcks_2 <- benchmarck_2( seq(1,30,2) )
+  
+```
+
+```{r}
+ggplot( benchmarcks_1, aes( x=n, color=expr)) +
+  ggtitle("Microbenchmark on log_factorial(n) and sum_log_factorial(n)") +geom_point (aes(y=median)) +
+  geom_errorbar(aes (ymin=lq, ymax=uq))
+  
+```
+
+
+```{r}
+ggplot( benchmarcks_2, aes( x=n, color="yellow")) +
+  ggtitle("Microbenchmark on fibonacci(n)") +geom_point (aes(y=median)) +
+  geom_errorbar(aes (ymin=lq, ymax=uq))
+```
+
+
+
+```{r}
+# rm(list = ls())
+
+
+```
+

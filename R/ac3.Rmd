@@ -1,0 +1,25 @@
+---
+title: "ac3"
+output:
+  word_document: default
+  html_document: default
+---
+# GTID: SSHI48
+
+```{r setup, include=FALSE}
+# install.packages("mapproj")
+# install.packages("ggmap")
+# install.packages("DeducerSpatial")
+
+setwd("/Users/Shijie/Documents/A-Gatech/CSE 6242/Homework/ac3")
+library(ggmap)
+data(quakes)
+```
+
+```{r}
+myLocation <- "Fiji"
+myMap <- get_map(location=myLocation, source="google", maptype="roadmap", crop = FALSE, zoom=4)
+ggmap(myMap) + geom_point(aes(x=long, y=lat), data=quakes, alpha=.3, color="darkred", size=1)+ ggtitle("Earthquakes in Fiji") + xlab("Latitude") + ylab("longitude")
+
+```
+

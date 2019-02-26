@@ -1,0 +1,345 @@
+---
+title: "auto_patent"
+output: html_document
+---
+
+```{r}
+rm(list=ls())
+library(stringr)
+library(Rcpp)
+
+setwd("/Users/Shijie/Documents/A-Vandy/RA/Auto patent/Data")
+load("patentsfull.rda")
+df <- unique(patent.df.merged)
+df <- df[, c(5,1,2,3,4)]
+
+# sample data
+# load("patentsample.rda")
+# df <- unique(patent.sample)
+```
+
+# Split patent.sample$basic 
+```{r}
+# save the current column names to vector cur_colnames
+cur_colnames=colnames(df)
+
+# split patent$basic by \n, save the result into a character vector basic
+basic<-unlist(strsplit(as.character(df$basic), "\n"))
+
+# save the 1st, 11th, 21th...etc. elements of basic to the 6th column of patent.sample
+# save the 2st, 12th, 22th...etc. elements of basic to the 7th column of patent.sample
+# combine the 4st and 5th, 14th and 15th...etc. elements of basic, 
+# then save to the 8th column of patent.sample
+# save the 8st, 18th, 28th...etc. elements of basic to the 9th column of patent.sample
+
+### seq
+# for (i in 1:nrow(df)){
+#   df[i,6] = basic[10*(i-1)+1]
+#   df[i,7] = basic[10*(i-1)+2]
+#   df[i,8] = paste(basic[10*(i-1)+4], basic[10*(i-1)+5])
+#   df[i,9]= basic[10*(i-1)+8]
+# } 
+# 
+# # rename the columns of patent.sample
+# names(df) <- append(cur_colnames, c("basic_country", "basic_patent_num", "basic_inventor", "basic_date") )
+```
+
+# Define an index-based split function 
+```{r}
+# # define an index-based split function 
+# indexSplit <- function(parentColumn, start, stop, end=FALSE ){
+#   #check if end
+#   if(end==FALSE){
+#   split_result <- substr(parentColumn, start+max(0, attr(start, "match.length")), stop-1)
+#   }else{
+#    split_result <-substr(parentColumn, start+max(0, attr(start, "match.length")), stop)
+#   }
+#   return (split_result)
+# }
+```
+
+# edge conditions: non-matching data
+# define two index-redefining functions 
+```{r}
+# Step 1. redefine indexes
+# check for non-matching data: -1 
+# if not match, replace it with the next matching result
+# e.g. observation 7, 92, 97
+#   index_us_class index_cpc_class index_intl_class index_field_of_search index_c_end
+# 7             1              28              194                    -1         310
+# 92            1              47               -1                   127         181
+# 97            1              67              118                    -1         232
+# 
+# we want to make the changes as below
+#
+#   index_us_class index_cpc_class index_intl_class index_field_of_search index_c_end
+# 7             1              28              194                    310         310
+# 92            1              47              127                    127         181
+# 97            1              67              118                    232         232
+indexReorg <- function(combined_index_df){
+  for( i in (ncol(combined_index_df)-1) : 1 ){
+    combined_index_df[,i] = ifelse( combined_index_df[,i]==-1,
+                                    combined_index_df[,i+1],
+                                    combined_index_df[,i])
+    }
+  return(combined_index_df)
+}
+
+# # Step 2. Mapping the redefined data back to original index matrixes
+# indexMap<-function(combined_index_df, index_matrix, a){
+#   for( i in 1:length(index_matrix) ){
+#     index_matrix[i]=combined_index_df[i,a]
+#   }
+#   return (index_matrix)
+# }
+```
+
+
+
+# Split patent.sample$inventor
+```{r}
+# find the indexes of "Inventors:", "Applicant:", "Assignee:", "Family ID:"
+#             "Appl. No.:", "Filed:", and the end of the character string
+index_inventor<-regexpr("Inventors:", df$inventor)
+index_applicant<-regexpr("Applicant:", df$inventor)
+index_assignee<-regexpr("Assignee:", df$inventor)
+index_family_id<-regexpr("Family ID:", df$inventor)
+index_appNo<-regexpr("Appl. No.:", df$inventor)
+index_filed_date<-regexpr("Filed:", df$inventor)
+index_i_end<-str_length(df$inventor) 
+## index_i_end<-regexpr("([1-9]|[12]\\d|30|31), \\d{4}", patent.sample$inventor)
+
+# construct the index matrix
+index_matrix_i_df <- data.frame(index_inventor, index_applicant, 
+                                 index_assignee, index_family_id, index_appNo,index_filed_date, index_i_end)
+# edge conditions: non-matching data
+# redefine the indexes
+index_matrix_i_df= indexReorg(index_matrix_i_df)
+
+# split patent$inventor
+df$inventor_inventor = ifelse( index_matrix_i_df[,1] != index_matrix_i_df[,2], 
+                                    substr(df$inventor, index_matrix_i_df[,1]+str_length("Inventors:"), index_matrix_i_df[,2]-1 ),
+                                    substr(df$inventor, index_matrix_i_df[,1], index_matrix_i_df[,2])    )
+
+df$inventor_applicant = ifelse( index_matrix_i_df[,2] != index_matrix_i_df[,3], 
+                                    substr(df$inventor, index_matrix_i_df[,2]+str_length("Applicant:"), index_matrix_i_df[,3]-1 ),
+                                    substr(df$inventor, index_matrix_i_df[,2], index_matrix_i_df[,3])    )
+
+df$inventor_assignee = ifelse( index_matrix_i_df[,3] != index_matrix_i_df[,4], 
+                                    substr(df$inventor, index_matrix_i_df[,3]+str_length("Assignee:"), index_matrix_i_df[,4]-1 ),
+                                    substr(df$inventor, index_matrix_i_df[,3], index_matrix_i_df[,4])    )
+
+df$inventor_family_id = ifelse( index_matrix_i_df[,4] != index_matrix_i_df[,5], 
+                                    substr(df$inventor, index_matrix_i_df[,4]+str_length("Family ID:"), index_matrix_i_df[,5]-1 ),
+                                    substr(df$inventor, index_matrix_i_df[,4], index_matrix_i_df[,5])    )
+
+df$inventor_appNo = ifelse( index_matrix_i_df[,5] != index_matrix_i_df[,6], 
+                                    substr(df$inventor, index_matrix_i_df[,5]+str_length("Appl. No.:"), index_matrix_i_df[,6]-1 ),
+                                    substr(df$inventor, index_matrix_i_df[,5], index_matrix_i_df[,6])    )
+
+df$inventor_filed_date = ifelse( index_matrix_i_df[,6] != index_matrix_i_df[,7], 
+                                    substr(df$inventor, index_matrix_i_df[,6]+str_length("Filed:"), index_matrix_i_df[,7] ),
+                                    substr(df$inventor, index_matrix_i_df[,6], index_matrix_i_df[,7])    )
+  
+
+
+# index_inventor = indexMap(index_matrix_i_df,  index_inventor, 1)
+# index_applicant = indexMap(index_matrix_i_df,  index_applicant, 2)
+# index_assignee = indexMap(index_matrix_i_df,  index_assignee, 3)
+# index_family_id = indexMap(index_matrix_i_df, index_family_id, 4)
+# index_appNo = indexMap(index_matrix_i_df, index_appNo, 5)
+# index_filed_date = indexMap(index_matrix_i_df, index_filed_date, 6)
+# 
+# # split patent$inventor
+# df$inventor_inventor = indexSplit(df$inventor, index_inventor, index_applicant)
+# 
+# df$inventor_applicant = indexSplit(df$inventor, index_applicant, index_assignee)
+# df$inventor_assignee = indexSplit(df$inventor, index_assignee, index_family_id)
+# df$inventor_family_id = indexSplit(df$inventor, index_family_id, index_appNo)
+# df$inventor_appNo = indexSplit(df$inventor, index_appNo, index_filed_date)
+# df$inventor_filed_date = indexSplit(df$inventor, index_filed_date, index_i_end, end=TRUE)
+```
+
+
+# Split patent.sample$class
+```{r}
+# find the indexes of "Current U.S. Class:", "Current CPC Class:", 
+#   "Current International Class", "Field of Search:", and the end of the character string
+index_us_class<-regexpr("Current U.S. Class:", df$class)
+index_cpc_class<-regexpr("Current CPC Class:", df$class)
+index_intl_class<-regexpr("Current International Class:", df$class)
+index_field_of_search<-regexpr("Field of Search:", df$class)
+index_c_end<-str_length(df$class)
+
+# construct the index matrix
+index_matrix_c_df <- data.frame(index_us_class, index_cpc_class, 
+                                 index_intl_class, index_field_of_search, index_c_end)
+
+# edge conditions: non-matching data
+# redefine the indexes
+index_matrix_c_df= indexReorg(index_matrix_c_df)
+
+
+# split df$class
+df$class_us_class = ifelse( index_matrix_c_df[,1] != index_matrix_c_df[,2], 
+                                    substr(df$class, index_matrix_c_df[,1]+str_length("Current U.S. Class:"), index_matrix_c_df[,2]-1 ),
+                                    substr(df$class, index_matrix_c_df[,1], index_matrix_c_df[,2])    )
+
+df$class_cpc_class = ifelse( index_matrix_c_df[,2] != index_matrix_c_df[,3],
+                                    substr(df$class, index_matrix_c_df[,2]+str_length("Current CPC Class:"), index_matrix_c_df[,3]-1 ),
+                                    substr(df$class, index_matrix_c_df[,2], index_matrix_c_df[,3])    )
+
+df$class_intl_class = ifelse( index_matrix_c_df[,3] != index_matrix_c_df[,4], 
+                                    substr(df$class, index_matrix_c_df[,3]+str_length("Current International Class:"), index_matrix_c_df[,4]-1 ),
+                                    substr(df$class, index_matrix_c_df[,3], index_matrix_c_df[,4])    )
+
+df$class_field_of_search = ifelse( index_matrix_c_df[,4] != index_matrix_c_df[,5], 
+                                    substr(df$class, index_matrix_c_df[,4]+str_length("Field of Search:"), index_matrix_c_df[,5] ),
+                                    substr(df$class, index_matrix_c_df[,4], index_matrix_c_df[,5])    )
+
+# index_us_class = indexMap(index_matrix_c_df,  index_us_class, 1)
+# index_cpc_class = indexMap(index_matrix_c_df,  index_cpc_class, 2)
+# index_intl_class = indexMap(index_matrix_c_df,  index_intl_class, 3)
+# index_field_of_search = indexMap(index_matrix_c_df, index_field_of_search, 4)
+# 
+# df$class_us_class = indexSplit(df$class, index_us_class, index_cpc_class)
+# df$class_cpc_class = indexSplit(df$class, index_cpc_class, index_intl_class)
+# df$class_intl_class = indexSplit(df$class, index_intl_class, index_field_of_search)
+# df$class_field_of_search = indexSplit(df$class, index_field_of_search, index_c_end, end=TRUE)
+
+```
+
+
+# remove whitespace and non-word characters from the whole date frame
+```{r}
+
+# remove the leading and trailing non-word characters: //W
+ df$class_field_of_search = gsub("^\\W+|\\W+$", "", df$class_field_of_search)
+
+# remove the leading and trailing whitespace: //s
+# must perform this step before spliting 'reference' 
+#     to avoid extra leading empty string after strsplit
+for( i in 1:ncol(df) ) {
+  df[, i] = gsub("^\\s+|\\s+$", "", df[, i])
+}
+
+
+```
+
+# Split patent.sample$refernce
+```{r}
+# pre-condition: no leading and trailing whitespace in 'reference'
+reference<-strsplit(as.character(df$reference), "\n")
+
+# # examine the split result
+# for (i in 1: length(reference)){
+#   if ( !is_multiple3 (reference[[i]]) ){
+#     print("Obeservation"+ df[i,1]+ "is not a multiple of 3.")
+#   }
+# }
+
+```
+
+# Split patent.sample$refernce
+```{r}
+# create a new data frame to save the splitted data from reference
+patent_num<-df[,1]
+data_size <-length(reference)
+sourceCpp("/Users/Shijie/Documents/A-Vandy/RA/Auto patent/Rcode/patent_reference_split.cpp")
+ref <- refSplit(reference, patent_num, data_size)
+ref <- ref[ref[,1]!="", ]
+
+# 
+# cppFunction('
+#     CharacterMatrix  refSplit( CharacterVector vector, String patentNum) {
+#       int count=0;
+#       int size = vector.size()/3;
+#       CharacterMatrix out(size,4);
+# 
+#       for( int j=0; j<size; j++){
+#         for(int k=0; k<3; k++){
+#           out(j,0)=patentNum;
+#           out(j,k+1)=vector[count];
+#           count++;
+#         }
+#     }
+#     return out;
+#   }
+# ')
+# 
+# 
+# patent_num<-df[,1]
+# re<-data.frame()
+# for(i in 1:length(reference)){
+#   patentNum<-patent_num[i]
+#   ref_vector = reference[[i]]
+#   ref_piece = refSplit(ref_vector, patentNum)
+#   re = rbind(re, ref_piece)
+# }
+
+
+# patent_num<-df[,1]
+# re<-data.frame()
+# for(i in 1:length(reference) ){
+#   ref_vector = reference[[i]]
+#   count=1
+#   for(j in 1:(length(ref_vector)/3)){
+#     re_df<-c("", "", "", "")
+#     for(k in 1:3){
+#       re_df[1]=patent_num[i]
+#       re_df[k+1]=ref_vector[count]
+#       count=count+1
+#     }
+#     re = rbind(re, re_df)
+#   }
+# }
+
+
+# ref_df<-data.frame()
+# m=0
+# for(i in 1:length(reference)){
+#   ref_vector = reference[[i]]
+#   count=1
+#   for(j in 1:(length(ref_vector)/3)){
+#     for(k in 1:3){
+#       ref_df[j+m,1]=df[i,1]
+#       ref_df[j+m,k+1]=ref_vector[count]
+#       count=count+1
+#     }
+#   }
+#   m=m+j
+# }
+# ref_df<- ref_df[order(ref_df$V1),]
+
+# rename the columns of ref_df
+names(ref) <- c("patent_num", "ref_num", "ref_date", "ref_inventor")
+
+```
+
+# Helper function
+```{r}
+# # check if the number of objects in a vector is the mutiple of 3
+# is_multiple3 <- function(x){
+#   if (x %% 3 == 0){
+#     return TRUE
+#   }
+#   return FALSE
+# }
+```
+
+
+# Save data
+```{r}
+save(df, file="/Users/Shijie/Documents/A-Vandy/RA/Auto patent/Data/patentfull_split.rda")
+save(ref, file="/Users/Shijie/Documents/A-Vandy/RA/Auto patent/Data/patentfull_split_reference.rda")
+
+```
+
+# comment:
+abnormal values: 1. check the cleaning algrithms. 2.If not, create an error list with patent number.
+packag grep. regular expression.
+try [:alnum:]  first
+gsub grep, remove or extract, find the easier way
+google chrome package:SelectGadget
+
+

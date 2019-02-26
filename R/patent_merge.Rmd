@@ -1,0 +1,41 @@
+---
+title: "patent_merge"
+output: html_document
+---
+
+# Merge patentful_split.rad with patentsfull-des.rda
+```{r}
+rm(list=ls())
+setwd("/Users/Shijie/Documents/A-Vandy/RA/Auto patent/Data")
+
+load("patentfull_split.rda")
+df<-df
+# write.csv(df, "patent_full.csv")
+
+load("patentsfull-des.rda")
+df_des <- patent.df.merged
+# write.csv(df_des, "patent_des.csv")
+```
+
+# remove the duplicate record in df, df_des
+```{r}
+df_unique <-unique(df)
+## 55912 obs-->55912 obs
+
+df_des_unique <-unique(df_des)
+## 563954 obs-->370261 obs
+
+## check duplicate observations
+# df_order <- df[order(df$patent.num),]
+# df_duplicate<-df[duplicated(df), ]
+```
+
+# Merge
+```{r}
+df_full <- merge(df_unique, df_des_unique, by="patent.num", all.df_unique=TRUE)
+```
+
+# Save data
+```{r}
+save(df_full, file="/Users/Shijie/Documents/A-Vandy/RA/Auto patent/Data/patent_merged.rda")
+```

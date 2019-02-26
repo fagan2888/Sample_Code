@@ -1,0 +1,69 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Preparation 
+```{r}
+rm(list=ls())
+library(dplyr)
+library(tidytext)
+library(tidyr)
+library(corpus)
+
+load("/Users/Shijie/Documents/A-Vandy/RA/Auto patent/Data/patentsfull.rda")
+df <- patent.df.merged
+# write.csv(df, "patent_full.csv")
+
+load("/Users/Shijie/Documents/A-Vandy/RA/Auto patent/Data/patentsfull-des.rda")
+df_des <- patent.df.merged
+# write.csv(df_des, "patent_des.csv")
+```
+
+# remove the duplicate record in df, df_des
+```{r}
+df_unique <-unique(df)
+## 106780 obs-->55912 obs
+
+df_des_unique <-unique(df_des)
+## 563954 obs-->370261 obs
+
+## ways to check duplicate observations
+# df_order <- df[order(df$patent.num),]
+# df_duplicate<-df[duplicated(df), ]
+```
+
+# Word frequency
+```{r}
+# Delete "\n" in variable description
+df_des_unique[,5]=gsub("\n", "", df_des_unique[, 4])
+
+# Frequency of one word
+df_word <- df_des_unique %>% unnest_tokens(word, V5) %>% anti_join(stop_words) %>% count(word, sort = TRUE)
+## 137396 obs
+
+# Frequency of two connected words
+df_ngram <- df_des_unique %>% unnest_tokens(ngram,V5, token = "ngrams", n = 2) %>% count(ngram, sort = TRUE) %>% separate(ngram, c("word1", "word2"), sep = " ", remove = FALSE)
+## 2975473 obs
+
+# take out the stop_word
+df_ngram <- subset(df_ngram , !word1 %in% stopwords_en & !word2 %in% stopwords_en)
+## 2181256 obs
+
+```
+
+
+
+# Merge
+```{r}
+df_full <- merge(df_unique, df_des_unique, by="patent.num", all=TRUE)
+```
+
+# Save data
+```{r}
+save(df_word, file="/Users/Shijie/Documents/A-Vandy/RA/Auto patent/Data/df_word.rda")
+save(df_ngram, file="/Users/Shijie/Documents/A-Vandy/RA/Auto patent/Data/df_ngram.rda")
+```
+
+

@@ -1,0 +1,153 @@
+<!-- Target webpage:
+http://www.doingbusiness.org/en/reforms/overview/economy/afghanistan -->
+
+<!--Example:
+ https://www.r-bloggers.com/web-scraping-javascript-rendered-sites/ -->
+
+setwd("R:/Shi/20180926 Shu_Yu_web_scraping")
+
+```{r}
+rm(list = ls())
+library(rvest)
+library(stringr)
+library(xlsx)
+library(foreign)
+options(stringsAsFactors = FALSE)
+```
+
+
+```{r}
+# !!! No need to re-run the grey part. All pages have been downloaded.
+
+# # Get the country list and the corresponding URL from the dropdown list
+# url <- 'http://www.doingbusiness.org/en/reforms/reforms-count'
+# lines <- readLines("scrape.js")
+# lines[1] <- paste0("var url ='", url ,"';")
+# lines[12] <- paste0("fs.write('", "countryMapping", ".html',     page.content, 'w');")
+# writeLines(lines, "scrape.js")
+# 
+# # Download website
+# system("phantomjs scrape.js")
+
+# Get the mapping
+pg <- read_html("countryMapping.html")
+countryList <- pg %>% html_nodes("a") %>% html_text()
+urlList <- pg %>% html_nodes("a") %>% html_attr("href")
+  
+countryMapping<- data.frame(countryList, urlList)
+
+match <- grep("http://www.doingbusiness.org/en/reforms/overview/economy/", countryMapping$urlList)
+countryMapping<- countryMapping[match, ]
+
+```
+
+```{r}
+# !!! No need to re-run this chunk. All pages have been downloaded.
+
+##Download all webpages
+# for ( i in 1:nrow(countryMapping) ) {
+#   url <- countryMapping[i,2]
+#   lines <- readLines("scrape.js")
+#   lines[1] <- paste0("var url ='", url ,"';")
+#   lines[12] <- paste0("fs.write('", i, ".html', page.content, 'w');")
+#   writeLines(lines, "scrape.js")
+# 
+#   system("phantomjs scrape.js")
+# }
+```  
+ 
+ 
+```{r}
+# 1. Initiate an empty data frame
+out <- data.frame( country = character(), 
+                   year = character(), 
+                   reform_type = character(), 
+                   reform = character(), 
+                   details = character() )
+
+
+# 2. Fill in information
+m = 1
+for ( num in 1:nrow(countryMapping) ) {
+
+    # Use Rvest to scrape the downloaded website.
+    page <- paste0(num, ".html")
+    pg <- read_html(page)
+    eventList <- pg %>% html_nodes(".search-listing-content") %>% html_text()
+    typeList <- pg %>% html_nodes("span") %>% html_attr("class") 
+
+    # 2.1 Deal with eventList
+    #     Trim the eventList
+    eventList <- lapply( strsplit(eventList,"\n") , trimws)
+    
+    event=list()
+    for ( i in 1:length(eventList) ) {
+        event[[i]] <- eventList[[i]]
+        event[[i]] <- event[[i]][ lapply( event[[i]], function(x)!(x=="") )==T]
+    }
+       
+    #     Fill in event information
+    for ( i in 1:length( event ) ) {
+      
+        n = 1
+        while ( n < length( event[[i]] ) ) {
+            out[m, 2] = event[[i]][1]
+            out[m, 5] = event[[i]][n+1]
+            n = n+1
+            m = m+1
+        }
+      
+    }
+    
+    # 2.2 Deal with typeList
+    typeList <- typeList[ typeList=="check-icon" | typeList=="close-icon" ]
+    typeList <- typeList[ !is.na(typeList) ]
+    #     The first two are for the exemples, remove
+    typeList <- typeList[ -c(1, 2) ] 
+    
+    typeList[typeList=="check-icon"] <- "good"
+    typeList[typeList=="close-icon"] <- "bad"
+    
+    #     Find the first NA value in variable reform_type
+    #     Fill in type information
+    l <- min( which(is.na(out$reform_type)) )
+    
+    k = 1
+    for ( i in l: (m-1) ) {
+        if ( grepl("Labor Market Regulation", out$details)[i] == TRUE ){
+            #Labor Market Regulation is a neutral event
+            out[i, 3] = "neutral" 
+        }else if ( grepl(":", out$details)[i] == FALSE ) { 
+            #Event name not start with a capital letter
+            out[i, 3] = "CHECK" 
+        }else{
+            out[i, 3] = typeList[k]
+            k = k + 1
+        }
+    }
+
+    #     Find the first NA value in variable country
+    #     Fill in country name
+    l <- min( which(is.na(out$country)) )
+
+    for ( i in l: (m-1) ) {
+        out[i, 1] = countryMapping[num, 1]
+    }
+
+}  
+
+# 3. Organize data
+pos<-regexpr(pattern=":", out$details)
+out$reform = substr(out$details, 1, pos-1)
+out$details = substr(out$details, pos+1, str_length(out$details))
+out$year = substr(out$year, 3, str_length(out$year))
+
+
+# 4. Output .xlsx and .dta
+write.csv(out, "db_reform.csv", row.names=FALSE)
+write.xlsx(out, "db_reform.xlsx", row.names=FALSE)
+# write.dta(out, "db_reform.dta") 
+```
+
+
+
