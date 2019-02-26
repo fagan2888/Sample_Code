@@ -1,0 +1,224 @@
+---
+title: "Career Development Tool for Young Professionals"
+subtitle: "**Sample Recommendation Report (UserID==3)**"
+output: pdf_document
+papersize: a4
+---
+
+```{r setup, include=FALSE}
+rm(list = ls())
+knitr::opts_knit$set(root.dir = normalizePath("/Users/Shijie/Documents/A-Gatech/CS 6460 Education Foundation/homework/Project"))
+
+library(ggplot2)
+```
+
+
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE}
+# Data Readin
+job <- read.csv("original/google_job_skills.csv")
+job <- job[ -which(job$Minimum.Qualifications==""), ]
+
+# Create Job ID using row index
+job$ID <- rownames(job)
+n = ncol(job)
+job <- job[ , c(n, 1:(n-1)) ]
+```
+
+
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE}
+# 1 Text Mining
+
+# 1.1 Minimum Qualification
+job_m <- job[, c(1,3,4,7,8)]
+
+# 1.1.1 Required Degree
+job_m$degree = NA
+
+job_m$degree[ grepl("MBA", job_m$Minimum.Qualification)  ] = 4
+
+job_m$degree[grepl("BA", job_m$Minimum.Qualification) & is.na(job_m$degree) ] = 1
+job_m$degree[grepl("BS", job_m$Minimum.Qualification) & is.na(job_m$degree) ] = 1
+job_m$degree[grepl("Bachelor", job_m$Minimum.Qualification) & is.na(job_m$degree) ] = 1
+job_m$degree[ grepl("Business Intern", job_m$Title) & is.na(job_m$degree) ] = 1
+
+job_m$degree[grepl("MA", job_m$Minimum.Qualification)] = 2
+job_m$degree[grepl("MS", job_m$Minimum.Qualification)] = 2
+job_m$degree[grepl("Master", job_m$Minimum.Qualification)] = 2
+
+job_m$degree[grepl("PhD", job_m$Minimum.Qualification)] = 3
+job_m$degree[grepl("Ph.D", job_m$Minimum.Qualification)] = 3
+
+job_m$degree[grepl("JD", job_m$Minimum.Qualification)] = 5
+job_m$degree[grepl("J.D.", job_m$Minimum.Qualification)] = 5
+
+
+# 1.1.2 Required Years of Experience
+job_m$Minimum.Qualifications <- gsub("\n", " ", job_m$Minimum.Qualifications)
+
+pattern <- "([1-9]|[1-9][0-9])\\s(years|year|-year)\\sof"
+
+job_m$expRaw <- substring( job_m$Minimum.Qualifications, regexpr(pattern, job_m$Minimum.Qualifications), regexpr(pattern, job_m$Minimum.Qualifications) + 2)
+
+job_m$exp <- as.numeric( gsub("[A-z]", "", job_m$expRaw) )
+
+
+# 1.2 Extracting Skills
+
+job_m$q <-paste(job_m$Minimum.Qualifications, job_m$Preferred.Qualifications, sep = " ")
+
+job_m$python = 0
+job_m$python[grepl("Python", job_m$q)] = 1 
+
+job_m$java = 0
+job_m$java[grepl("Java", job_m$q)] = 1 
+
+job_m$cpp = 0
+job_m$cpp[grepl("C\\+\\+", job_m$q)] = 1 
+
+job_m$c = 0
+job_m$c[grepl("\\sC\\s", job_m$q)] = 1
+
+job_m$chash = 0
+job_m$chash[grepl("C#", job_m$q)] = 1
+
+job_m$php = 0
+job_m$php[grepl("PHP", job_m$q)] = 1 
+
+job_m$javascript = 0
+job_m$javascript[grepl("JavaScript", job_m$q)] = 1 
+
+job_m$sql = 0
+job_m$sql[grepl("SQL", job_m$q)] = 1
+
+job_m$ruby = 0
+job_m$ruby[grepl("Ruby", job_m$q)] = 1
+
+job_m$perl = 0
+job_m$perl[grepl("Perl", job_m$q)] = 1
+
+# 1.3 Delete observations with all missing values in skills
+job_m$t <- rowSums( job_m[, c( 10:ncol(job_m))], na.rm=TRUE)
+job_m <- job_m[job_m$t>0,]
+
+# 1.4 Create final matrix
+job_m <- job_m[ , c( 1, 6, 8, 10: (ncol(job_m)-1) ) ]
+
+```
+
+
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE}
+# 2. Matching
+
+# 2.1 Minimum requirement
+filter.min.req <- function(i, data) {
+  # i: an user
+  # data: row: jobs and a target user; col: skills
+  
+  # degree
+  d <- data[ data$ID==i, ]$degree
+  if ( !is.na(d) ) { # has degree requirement
+    data_f <- data[ !is.na(data$degree), ]
+    data_f <- data_f[ data_f$degree>=d, ]
+  }
+ 
+  # Years of experience
+  e <- data[ data$ID==i, ]$exp
+  if ( !is.na(e) ) { # has work requirement
+    data_f <- data_f[ !is.na(data_f$exp), ]
+    data_f <- data_f[ data_f$exp>=e, ]
+  }
+  
+  return(data_f)
+}
+
+
+# 2.2 KNN
+k.nearest.neighbors <- function(i, data, k = 5, comp=FALSE ){  
+  # i: an user
+  # data: row: jobs and a target user; col: skills
+  # k=5: offer 5 recommendations
+  data <- t(data)
+  similarities <- cor(data)
+  distances <- -log((similarities / 2) + 0.5)
+  var <- paste("X", i, sep="")
+  distances<-data.frame(distances)
+  
+  list <- cbind(distances[, names(distances)==var], as.numeric(row.names(distances) ) ) 
+  list <- list[order(list[,1]),]
+  
+  if(comp==FALSE) {
+    return(list[,2] [2:(k + 1)])
+  }else{
+    return(distances)
+  }
+}
+
+
+# 2.3 Job recommendation
+user = 3
+
+job_f <- filter.min.req(user, job_m)
+job_f <- job_f[, 4:ncol(job_f)]
+id <- k.nearest.neighbors(user, job_f, k=5, comp=FALSE)
+
+id <-data.frame(id)
+job_recommendation <- merge(id, job, by.x = "id", by.y = "ID")
+
+# 2.4 Skill recommendation
+skill_rec <- rbind(id, user)
+skill_rec <- merge(skill_rec, job_m, by.x = "id", by.y = "ID")
+skill_rec <- rbind(skill_rec, colMeans(skill_rec, na.rm = TRUE))
+
+skill_comp <- rbind(skill_rec[skill_rec$id==as.character(user),], skill_rec[nrow(skill_rec),] )
+skill_recommendation <- skill_comp[ , (skill_comp[2, ] > skill_comp[1,]) ]
+skill_recommendation$exp <- round( as.numeric(skill_recommendation$exp), digits = 1)
+skill_recommendation[2,1] <- ""
+row.names(skill_recommendation) <- c("User", "Recommended")
+```
+
+
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE}
+# 3. Ranking - Competitiveness Analysis
+# Scenario: an user (ID=3) wants to apply for a recommended job (ID = 24). What is his ranking?
+user = 3
+job = 24
+
+var <- paste("X", job, sep="")
+
+comp <- k.nearest.neighbors(user, job_f, k=5, comp=TRUE)
+comp_list <- data.frame(comp[, names(comp)==var], as.numeric(row.names(comp) ) )
+
+colnames(comp_list)<-c("score", "ID")
+comp_list <- comp_list[order(comp_list[,1]),]
+comp_list <- comp_list[-which(comp_list$ID==24), ]
+
+# Histogram
+pic <- ggplot(comp_list, aes(x=score)) + geom_histogram()
+
+scoreLine <- comp_list[ comp_list[,comp_list$ID==user], 1]
+
+comp_pic <- pic + geom_vline(aes(xintercept=scoreLine),
+                 color="blue", linetype="dashed", size=1) + ggtitle("Competitiveness Analysis") 
+```
+
+## 1. Job recommendations
+
+```{r message=FALSE}
+job_recommendation[, 1:3]
+```
+The list above shows the top five jobs that most match the profile of the targeted user.
+
+## 2. Skill recommendations
+```{r message=FALSE}
+skill_recommendation
+```
+The table above suggests that if the user wants to increase her competency for the targeted jobs, she may consider accumulating more years of work experience to advance her career further.  
+
+## 3. Competitiveness analysis
+<div style= "float:right;position: relative; top: -80px;">
+```{r message=FALSE, fig.height=2.5, fig.width=3}
+nrow(comp_list)
+comp_pic
+```
+</div>
+The picture above shows the user has an excellent profile that meets the requirement of the targeted job (job id equals to 24). However, about 20 other job seekers also have similar profiles as the user does. Considering there are 117 job seekers in the pool, the user's competency level for the targeted job is around the top 17
