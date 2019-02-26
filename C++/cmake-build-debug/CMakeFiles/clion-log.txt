@@ -1,0 +1,4 @@
+/Applications/CLion.app/Contents/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ -G "CodeBlocks - Unix Makefiles" "/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7"
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/cmake-build-debug

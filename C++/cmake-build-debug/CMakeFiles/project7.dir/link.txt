@@ -1,0 +1,1 @@
+/usr/bin/clang++   -std=c++11 -Wall -Werror -Wextra -pedantic -pedantic-errors -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/project7.dir/Main.cpp.o CMakeFiles/project7.dir/Maze.cpp.o CMakeFiles/project7.dir/MazeSolver.cpp.o CMakeFiles/project7.dir/Point.cpp.o  -o ../project7 

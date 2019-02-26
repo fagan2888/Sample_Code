@@ -1,0 +1,112 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/FifoPointAgenda.h
+PointAgenda.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/PointAgenda.h
+Queue_t.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Queue_t.h
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/LifoPointAgenda.h
+PointAgenda.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/PointAgenda.h
+Stack_t.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Stack_t.h
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Main.cpp
+iostream
+-
+algorithm
+-
+Maze.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Maze.h
+PointAgenda.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/PointAgenda.h
+LifoPointAgenda.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/LifoPointAgenda.h
+FifoPointAgenda.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/FifoPointAgenda.h
+MazeSolver.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/MazeSolver.h
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Maze.cpp
+stdexcept
+-
+cstdlib
+-
+Maze.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Maze.h
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Maze.h
+string
+-
+fstream
+-
+iostream
+-
+Point.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Point.h
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/MazeSolver.cpp
+iostream
+-
+MazeSolver.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/MazeSolver.h
+Maze.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Maze.h
+PointAgenda.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/PointAgenda.h
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/MazeSolver.h
+Maze.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Maze.h
+PointAgenda.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/PointAgenda.h
+Point.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Point.h
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Point.cpp
+Point.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Point.h
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Point.h
+iostream
+-
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/PointAgenda.h
+Point.h
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Point.h
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Queue_t.cpp
+cstddef
+-
+stdexcept
+-
+iostream
+-
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Queue_t.h
+cstdio
+-
+Queue_t.cpp
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Queue_t.cpp
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Stack_t.cpp
+cstddef
+-
+stdexcept
+-
+iostream
+-
+
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Stack_t.h
+cstdio
+-
+Stack_t.cpp
+/Users/Shijie/Documents/A-Vandy/CS 2201/Fall 2017/02 Homework/project7/project7/Stack_t.cpp
+
