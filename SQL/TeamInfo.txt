@@ -1,0 +1,26 @@
+All PHP file include SQL queries
+
+./addtools.php
+./addtools_db.php
+./checktool.php
+./clerk.php
+./clerk_checktool.php
+./clerk_report.php
+./customer_report.php
+./dropoff1.php
+./dropoff2.php
+./dropoff3.php
+./index.php
+./index_viewprofile.php
+./login.php
+./looptool.php
+./pickup1.php
+./pickup2.php
+./register.php
+./rentalContract.php
+./res_conf.php
+./res_detail.php
+./reservation.php
+./tooldetail.php
+./toolinvent.php
+./viewprofile.php
